@@ -1,0 +1,254 @@
+import { Button, ScrollView, VerticalBox, HorizontalBox, ListView } from "std-widgets.slint";
+
+export struct DiffLine {
+    text: string,
+    line_type: int,  // 0=unchanged, 1=deleted, 2=added
+}
+
+component ConfirmDialog inherits Rectangle {
+    in-out property <bool> show: false;
+    in-out property <[DiffLine]> diff_lines: [];
+    
+    callback confirmed();
+    callback cancelled();
+    
+    if show: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #00000080;
+        
+        Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            width: 700px;
+            height: 500px;
+            background: white;
+            border-radius: 8px;
+            drop-shadow-blur: 20px;
+            drop-shadow-color: #00000040;
+            
+            VerticalBox {
+                padding: 20px;
+                spacing: 15px;
+                
+                Rectangle {
+                    height: 30px;
+                    
+                    Text {
+                        x: 0;
+                        text: "Confirm Changes";
+                        font-size: 20px;
+                        font-weight: 600;
+                        color: #2c3e50;
+                        vertical-alignment: center;
+                    }
+                    
+                    // Legend - Deleted
+                    Rectangle {
+                        x: parent.width - 180px;
+                        y: 8px;
+                        width: 14px;
+                        height: 14px;
+                        background: #ffeef0;
+                        border-width: 1px;
+                        border-color: #cb2431;
+                        border-radius: 2px;
+                    }
+                    Text {
+                        x: parent.width - 160px;
+                        width: 60px;
+                        text: "Deleted";
+                        font-size: 12px;
+                        color: #cb2431;
+                        vertical-alignment: center;
+                    }
+                    
+                    // Legend - Added
+                    Rectangle {
+                        x: parent.width - 90px;
+                        y: 8px;
+                        width: 14px;
+                        height: 14px;
+                        background: #e6ffed;
+                        border-width: 1px;
+                        border-color: #22863a;
+                        border-radius: 2px;
+                    }
+                    Text {
+                        x: parent.width - 70px;
+                        width: 60px;
+                        text: "Added";
+                        font-size: 12px;
+                        color: #22863a;
+                        vertical-alignment: center;
+                    }
+                }
+                Rectangle {
+                    vertical-stretch: 1;
+                    background: #fafbfc;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: #e1e4e8;
+                    
+                    ListView {
+                        x: 5px;
+                        y: 5px;
+                        width: parent.width - 10px;
+                        height: parent.height - 10px;
+                        
+                        for line in diff_lines: Rectangle {
+                            height: 24px;
+                            background: line.line_type == 1 ? #ffeef0 : 
+                                       line.line_type == 2 ? #e6ffed : transparent;
+                            
+                            Text {
+                                x: 10px;
+                                width: parent.width - 20px;
+                                text: line.text;
+                                font-family: "Microsoft YaHei";
+                                font-size: 13px;
+                                color: line.line_type == 1 ? #cb2431 : 
+                                       line.line_type == 2 ? #22863a : #24292e;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+                    }
+                }
+                
+                HorizontalBox {
+                    alignment: end;
+                    spacing: 10px;
+                    
+                    Button {
+                        text: "Cancel";
+                        clicked => { cancelled(); }
+                    }
+                    
+                    Button {
+                        text: "Save";
+                        primary: true;
+                        clicked => { confirmed(); }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "Hosts File Editor";
+    width: 900px;
+    height: 650px;
+    background: #f5f7fa;
+    
+    in-out property <string> hosts_content: "";
+    in-out property <string> status: "";
+    in-out property <string> hosts_path: "";
+    in-out property <[DiffLine]> diff_lines: [];
+    in-out property <bool> show_confirm: false;
+    
+    callback save_clicked();
+    callback refresh_clicked();
+    callback confirm_save();
+    callback cancel_save();
+    
+    VerticalBox {
+        padding: 30px;
+        spacing: 20px;
+        
+        // Header
+        HorizontalBox {
+            alignment: center;
+            
+            VerticalBox {
+                spacing: 5px;
+                
+                Text {
+                    text: "Windows Hosts Editor";
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #2c3e50;
+                    horizontal-alignment: center;
+                }
+                
+                Text {
+                    text: root.hosts_path;
+                    font-size: 12px;
+                    color: #95a5a6;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+        
+        // Toolbar
+        HorizontalBox {
+            spacing: 12px;
+            alignment: start;
+            
+            Button {
+                text: "Refresh";
+                clicked => { root.refresh_clicked(); }
+            }
+            
+            Button {
+                text: "Save";
+                primary: true;
+                clicked => { root.save_clicked(); }
+            }
+        }
+        
+        // Editor
+        Rectangle {
+            vertical-stretch: 1;
+            background: white;
+            border-width: 1px;
+            border-color: #e1e8ed;
+            border-radius: 8px;
+            drop-shadow-blur: 10px;
+            drop-shadow-color: #0000000a;
+            
+            ScrollView {
+                x: 15px;
+                y: 15px;
+                width: parent.width - 30px;
+                height: parent.height - 30px;
+                viewport-height: editor.preferred-height;
+                
+                editor := TextInput {
+                    width: parent.width - 20px;
+                    text <=> root.hosts_content;
+                    font-family: "Microsoft YaHei";
+                    font-size: 14px;
+                    color: #2c3e50;
+                    wrap: word-wrap;
+                    selection-background-color: #3498db40;
+                    selection-foreground-color: #2c3e50;
+                }
+            }
+        }
+        
+        // Status bar
+        if root.status != "": Rectangle {
+            height: 35px;
+            background: root.status == "File saved successfully" ? #d4edda : #f8d7da;
+            border-radius: 6px;
+            
+            Text {
+                x: 15px;
+                text: root.status;
+                font-size: 13px;
+                color: root.status == "File saved successfully" ? #155724 : #721c24;
+                vertical-alignment: center;
+            }
+        }
+    }
+    
+    // Confirm dialog overlay
+    ConfirmDialog {
+        show: root.show_confirm;
+        diff_lines: root.diff_lines;
+        confirmed => { root.confirm_save(); }
+        cancelled => { root.cancel_save(); }
+    }
+}
