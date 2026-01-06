@@ -1,0 +1,16 @@
+[package]
+name = "hosts-editor"
+version = "0.1.0"
+edition = "2024"
+
+[windows]
+subsystem = "windows"
+
+[dependencies]
+slint = "1.8"
+dirs = "5.0"
+similar = "2.6"
+encoding_rs = "0.8"
+
+[build-dependencies]
+slint-build = "1.8"
