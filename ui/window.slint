@@ -1,4 +1,4 @@
-import { Button, ScrollView, VerticalBox, HorizontalBox, ListView } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, ListView, TextEdit } from "std-widgets.slint";
 
 export struct DiffLine {
     text: string,
@@ -207,24 +207,15 @@ export component MainWindow inherits Window {
             border-radius: 8px;
             drop-shadow-blur: 10px;
             drop-shadow-color: #0000000a;
-            
-            ScrollView {
+
+            TextEdit {
                 x: 15px;
                 y: 15px;
                 width: parent.width - 30px;
                 height: parent.height - 30px;
-                viewport-height: editor.preferred-height;
-                
-                editor := TextInput {
-                    width: parent.width - 20px;
-                    text <=> root.hosts_content;
-                    font-family: "Microsoft YaHei";
-                    font-size: 14px;
-                    color: #2c3e50;
-                    wrap: word-wrap;
-                    selection-background-color: #3498db40;
-                    selection-foreground-color: #2c3e50;
-                }
+                text <=> root.hosts_content;
+                font-size: 14px;
+                wrap: word-wrap;
             }
         }
         
